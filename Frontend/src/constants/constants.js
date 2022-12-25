@@ -10,4 +10,5 @@ export const service_type = [{
     type: "SHAVING",
     price: 100
 }]
-export const MobileNumber = "";
+export const MobileNumber = "9876543210";
+export const GST = "1234567"; 

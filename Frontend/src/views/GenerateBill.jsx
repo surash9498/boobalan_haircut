@@ -1,13 +1,15 @@
 import DateFnsUtils from '@date-io/date-fns';
-import { Button, FormControl, Grid, InputLabel, makeStyles, Select } from '@material-ui/core';
+import { Button, FormControl, Grid, InputLabel, makeStyles, Select, Switch } from '@material-ui/core';
 import { KeyboardDatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers';
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import CustomInput from '../components/InputText/CustomInput';
 import { ADD_USER, GET_USER } from '../constants/apiConstants';
-import { service_by, service_type } from '../constants/constants';
+import { APP_TITLE, GST, MobileNumber, service_by, service_type } from '../constants/constants';
 import BillView from './BillView';
-import PDFView from './PDFView';
+import "./BillView.css";
+import "./PrintPage.css"
+import salon from "../salon.png";
 
 const useStyles = makeStyles((theme) => ({
 
@@ -48,6 +50,8 @@ function Billing() {
   const [customerData, setCustomerData] = useState("")
   const [serviceType, setServiceType] = useState({ type: "" })
   const [existingUser, setExistingUser] = useState(false);
+  const componentRef = useRef();
+  const [gst, setgst] = useState(true);
   const fetchDetails = () => {
 
     axios.post(GET_USER, { ...value }).then((res) => {
@@ -85,14 +89,23 @@ function Billing() {
 
   }, [value.service])
   const gstCalculator = () => {
-    let sgst = value.service.reduce((acc, current) => {
-      return acc + (parseFloat(current.price) * 9) / 100
-    }, 0)
+    let sgst;
+    if (gst) {
+      sgst = value.service.reduce((acc, current) => {
+        return acc + (parseFloat(current.price) * 9) / 100
+      }, 0)
+    } else {
+      sgst = 0
+    }
+
     setValue((prev) => ({ ...prev, invoice: { tax: sgst * 2 } }))
   }
   useEffect(() => {
     TotalAmountCalculator();
   }, [value.invoice.tax])
+  useEffect(() => {
+    gstCalculator()
+  }, [gst])
   const TotalAmountCalculator = () => {
     let totalAmount = value.service.reduce((acc, cur) => (acc + parseFloat(cur.price)), value.invoice.tax)
     setValue((prev) => ({
@@ -116,90 +129,168 @@ function Billing() {
   }, [value])
 
   return (
-    <div className={classes.divider}>
-      <Grid container alignItems='center' justifyContent='center' lg={12} direction="row">
-        <Grid item container alignItems='center' justifyContent='center' lg={6} direction="column" spacing={3} className={classes.sideLine}>
-          <Grid item >
-            <CustomInput label="Mobile" placeHolder="Enter Mobile Number" type="mobile" errormsg="Invalid Mobile Number" setValue={setValue} value={value.mobileNumber} action={fetchDetails}></CustomInput>
+    <>
+      <div className={classes.divider}>
+        <Grid container alignItems='center' justifyContent='center' lg={12} direction="row">
+          <Grid item container alignItems='center' justifyContent='center' lg={6} direction="column" spacing={3} className={classes.sideLine}>
+            <Grid item >
+              <CustomInput label="Mobile" placeHolder="Enter Mobile Number" type="mobile" errormsg="Invalid Mobile Number" setValue={setValue} value={value.mobileNumber} action={fetchDetails}></CustomInput>
 
-          </Grid>
-          <Grid item container alignItems='center' justifyContent='center' lg={6} direction="column" >
-            {existingUser ? null : <><CustomInput label="Name" placeHolder="Enter Customer Name" type="name" errormsg="Invalid Entry" setValue={setValue} value={value.Name} ></CustomInput>
-              <Button variant='contained' color="primary" onClick={() => addUser()}>Add User</Button></>}
-          </Grid>
-          <Grid item >
-            <FormControl className={classes.formControl}>
-              <InputLabel htmlFor="by-native-simple">Service By</InputLabel>
-              <Select
-                native
-                value={value.serviceBy}
-                onChange={({ target: { value } }) => setValue((prevState) => ({ ...prevState, serviceBy: value }))}
-                inputProps={{
-                  name: 'Service By',
-                  id: 'by-native-simple',
-                }}
-              >
-                <option aria-label="None" value="" />
-                {service_by.map((name) =>
-                  <option key={name} value={name}>{name}</option>
-                )}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item>
-            <FormControl className={classes.formControl}>
-              <InputLabel htmlFor="by-native-simple" >Service Type</InputLabel>
-              <Select
-                native
-                value={serviceType.type}
-                onChange={(event) => {
-                  let type = event.target.options[event.target.selectedIndex].text;
-                  let { price } = service_type.find(({ type }) => type == type)
-                  return setServiceType({ type: type, price: price })
-                }
-                }
-                inputProps={{
-                  name: 'Service By',
-                  id: 'by-native-simple',
-                }}
-              >
-                <option aria-label="None" value="" />
-                {service_type.map((service, index) =>
-                  <option key={index} value={service.type}>{service.type}</option>
-                )}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item>
-            <Button variant='contained' color='primary' onClick={() => addService()
-            }>Add</Button>
-          </Grid>
-          <Grid item >
-            <MuiPickersUtilsProvider utils={DateFnsUtils}>
-              <KeyboardDatePicker
-                disableToolbar
-                variant="inline"
-                margin="normal"
-                id="date-picker-inline"
-                format='MM/dd/yyyy'
-                label="Date picker inline"
-                value={value.date}
-                onChange={(value) => {
+            </Grid>
+            <Grid item container alignItems='center' justifyContent='center' lg={6} direction="column" >
 
-                  setValue((prevState) => ({ ...prevState, date: value.toISOString().split("T")[0] }))
-                }}
-                KeyboardButtonProps={{
-                  'aria-label': 'change date',
-                }}
+              {existingUser ? null : <><CustomInput label="Name" placeHolder="Enter Customer Name" type="name" errormsg="Invalid Entry" setValue={setValue} value={value.Name} ></CustomInput>
+
+                <Button style={{ marginTop: "2vh" }} variant='contained' color="primary" onClick={() => addUser()}>Add User</Button></>}
+            </Grid>
+            <Grid item >
+              <FormControl className={classes.formControl}>
+                <InputLabel htmlFor="by-native-simple">Service By</InputLabel>
+                <Select
+                  native
+                  value={value.serviceBy}
+                  onChange={({ target: { value } }) => setValue((prevState) => ({ ...prevState, serviceBy: value }))}
+                  inputProps={{
+                    name: 'Service By',
+                    id: 'by-native-simple',
+                  }}
+                >
+                  <option aria-label="None" value="" />
+                  {service_by.map((name) =>
+                    <option key={name} value={name}>{name}</option>
+                  )}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item>
+              <FormControl className={classes.formControl}>
+                <InputLabel htmlFor="by-native-simple" >Service Type</InputLabel>
+                <Select
+                  native
+                  value={serviceType.type}
+                  onChange={(event) => {
+                    let type = event.target.options[event.target.selectedIndex].text;
+                    let { price } = service_type.find(({ type }) => type == type)
+                    return setServiceType({ type: type, price: price })
+                  }
+                  }
+                  inputProps={{
+                    name: 'Service By',
+                    id: 'by-native-simple',
+                  }}
+                >
+                  <option aria-label="None" value="" />
+                  {service_type.map((service, index) =>
+                    <option key={index} value={service.type}>{service.type}</option>
+                  )}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item>
+              <Button variant='contained' color='primary' onClick={() => addService()
+              }>Add</Button>
+            </Grid>
+            <Grid item>
+              <Switch
+                checked={gst}
+                onChange={() => setgst((prev) => !prev)}
+                name="gst"
               />
-            </MuiPickersUtilsProvider>
-          </Grid>
-        </Grid>
+            </Grid>
 
-        <BillView deleteItem={deleteItem} value={value} setValue={setValue}></BillView>
-      </Grid>
-      {/* <PDFView></PDFView> */}
-    </div>
+            <Grid item >
+              <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                <KeyboardDatePicker
+                  disableToolbar
+                  variant="inline"
+                  margin="normal"
+                  id="date-picker-inline"
+                  format='MM/dd/yyyy'
+                  label="Date picker inline"
+                  value={value.date}
+                  onChange={(value) => {
+
+                    setValue((prevState) => ({ ...prevState, date: value.toISOString().split("T")[0] }))
+                  }}
+                  KeyboardButtonProps={{
+                    'aria-label': 'change date',
+                  }}
+                />
+              </MuiPickersUtilsProvider>
+            </Grid>
+          </Grid>
+
+          <BillView deleteItem={deleteItem} value={value} setValue={setValue} ref={componentRef}></BillView>
+        </Grid>
+        {/* <PDFView></PDFView> */}
+      </div>
+      <div className="onlyprint" ref={componentRef}>
+        <h4 className='center'>{APP_TITLE}</h4>
+        <br></br>
+        <br></br>
+        <div className='topMargin meta'>
+          <p>{value.date}</p>
+          <p><img src={salon} width="12vw" height="12vh"></img>&nbsp;{value.serviceBy}</p>
+
+        </div>
+        <div className='meta'>
+          <p>{MobileNumber}</p>
+          <p>GST No:{GST}</p>
+
+        </div>
+        <div className='topMargin meta'>
+          <p>S.No</p>
+          <p>Service</p>
+          <p>Cost</p>
+        </div>
+        {value.service.map((x, index) => (<div className='topMargin meta'>
+          <p  >{index + 1}</p>
+          <p  >{x.type}</p>
+          <p >{x.price}</p>
+        </div>
+        ))}
+        <div className='topMargin meta'>
+          <p></p>
+          <p>Sub-Total</p>
+          <p>
+            {value.service.reduce((acc, current) => {
+              return acc + parseFloat(current.price)
+            }, 0)}
+          </p>
+        </div>
+        <div className='topMargin meta'>
+          <p></p>
+          <p>CGST</p>
+          <p>
+            {value.invoice.tax}
+          </p>
+        </div>
+        <div className=' meta'>
+          <p></p>
+          <p>SGST</p>
+          <p>
+            {value.invoice.tax}
+          </p>
+        </div>
+        <div className='topMargin meta'>
+          <p></p>
+          <p>Total</p>
+          <p>
+            {value.invoice.total}
+          </p>
+        </div>
+        <div className='meta '>
+          <p style={{ fontSize: "8px" }} className='dev'>Developed By SiteSearch&#169; </p>
+
+        </div>
+        <div className='meta '>
+          <p style={{ fontSize: "10px" }}>Ph:9629707622</p>
+
+        </div>
+
+      </div>
+    </>
   )
 }
 

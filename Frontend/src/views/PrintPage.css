@@ -1,0 +1,22 @@
+@media print {
+
+    .center {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+    }
+
+    .topMargin {
+        border-top: 1px solid black;
+    }
+
+    .meta {
+        display: flex;
+        direction: row;
+        align-items: flex-start;
+        justify-content: space-around;
+    }
+
+}
