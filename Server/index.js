@@ -3,6 +3,7 @@ const { UserAccess } = require('./constants');
 const mongoose = require("mongoose");
 let { dbconnect, close } = require("./connect");
 const { addService, addUser, fetchUser, audithistory } = require('./ManageUsers');
+const path = require("path")
 const app = express()
 
 const port = 5000
@@ -13,6 +14,9 @@ app.use(async (req, res, next) => {
     next();
 });
 
+// app.use(express.static('build'))
+app.use(express.static(path.join(__dirname, 'build')))
+// app.use("/", express.static(path.join(__dirname, 'build')))
 app.post("/api/login", (req, res) => {
     let result = UserAccess.find((user) => user[req.body.UserName])
 
@@ -38,6 +42,10 @@ app.get("/api/audithistory", (req, res) => {
 
 
 })
+app.get("/*", (req, res) => {
+    res.sendFile(path.join(__dirname, "build", "index.html"))
+})
+
 process.on("SIGINT", async () => {
     await close();
     process.exit(0);
