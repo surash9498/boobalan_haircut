@@ -2,7 +2,7 @@
 let mongoose = require("mongoose");
 const { mongodburl } = require("./constants");
 const dbconnect = () => {
-    mongoose.connect("mongodb://0.0.0.0:27017/Phoenix");
+    mongoose.connect("mongodb://0.0.0.0:27017/Phoenix?directConnection=true");
 };
 
 const close = () => mongoose.connection.close();

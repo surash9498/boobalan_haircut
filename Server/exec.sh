@@ -1,0 +1,2 @@
+# mongod
+node index.js
