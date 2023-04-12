@@ -1,8 +1,15 @@
-import { DataGrid } from '@mui/x-data-grid'
+import { DataGrid, GridToolbarContainer, GridToolbarExport } from '@mui/x-data-grid'
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { AUDIT_HISTORY } from '../constants/apiConstants'
 
+function CustomToolbar() {
+    return (
+        <GridToolbarContainer>
+            <GridToolbarExport />
+        </GridToolbarContainer>
+    );
+}
 function Audit() {
     const columns = [
 
@@ -91,6 +98,9 @@ function Audit() {
             rowsPerPageOptions={[100]}
             checkboxSelection
             disableSelectionOnClick
+            components={{
+                Toolbar: CustomToolbar,
+            }}
         />
     </div>
 
